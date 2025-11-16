@@ -1,0 +1,14 @@
+
+appointments:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+script.js:699 Current user state: {
+  "id": "2",
+  "email": "doctor@example.com",
+  "name": "Doctor User",
+  "role": "Doctor",
+  "doctorId": 1
+}
+script.js:272  POST http://localhost:5067/api/appointments 500 (Internal Server Error)
+fetchWithAuth @ script.js:272
+(anonymous) @ script.js:703
+
+出現這個錯誤 先修好這個

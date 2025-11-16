@@ -1,0 +1,15 @@
+<svg version="1.1" id="body" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 300 600" style="enable-background:new 0 0 300 600;" xml:space="preserve">
+<style type="text/css">
+	.body-part{fill:#CDCDCD;stroke:#FFFFFF;stroke-width:2;stroke-miterlimit:10; transition: fill 0.3s ease; cursor: pointer;}
+	.body-part:hover{fill:#007bff;}
+</style>
+<g id="body-map-group">
+	<path id="body-head" class="body-part" d="M150,60c-22.1,0-40,17.9-40,40s17.9,40,40,40s40-17.9,40-40S172.1,60,150,60z"/>
+	<path id="body-torso" class="body-part" d="M120,150h60v150h-60V150z"/>
+	<path id="body-arm-left" class="body-part" d="M110,160l-30,80l-10,100h20l10-90l20-80L110,160z"/>
+	<path id="body-arm-right" class="body-part" d="M190,160l30,80l10,100h-20l-10-90l-20-80L190,160z"/>
+	<path id="body-leg-left" class="body-part" d="M140,300l-20,150h30l-10-150H140z"/>
+	<path id="body-leg-right" class="body-part" d="M160,300l20,150h-30l10-150H160z"/>
+</g>
+</svg>
