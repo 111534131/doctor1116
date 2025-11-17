@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchDoctorInfo() {
         if (state.user && state.user.role === 'Doctor') {
             try {
-                const response = await fetchWithAuth(`${API_BASE_URL}/doctors/user/${state.user.id}`);
+                const response = await fetchWithAuth(`${API_BASE_URL}/get_doctor_by_user.php?id=${state.user.id}`);
                 if (response.ok) {
                     const doctor = await response.json();
                     state.user.doctorId = doctor.id;
@@ -432,12 +432,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             let response;
             if (recordId) {
-                response = await fetchWithAuth(`${API_BASE_URL}/medicalrecords/${recordId}`, {
+                response = await fetchWithAuth(`${API_BASE_URL}/medical_records.php?id=${recordId}`, {
                     method: 'PUT',
                     body: JSON.stringify(recordData)
                 });
             } else {
-                response = await fetchWithAuth(`${API_BASE_URL}/medicalrecords`, {
+                response = await fetchWithAuth(`${API_BASE_URL}/medical_records.php`, {
                     method: 'POST',
                     body: JSON.stringify(recordData)
                 });
@@ -481,17 +481,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DATA FETCHING & RENDERING ---
     async function getDoctors() {
         try {
-            // Temporarily bypass fetchWithAuth for debugging
-            const response = await fetch('/ukn111534131/Backend/get_all_doctors.php'); // Use direct fetch
-            if (!response.ok) throw new Error('Failed to fetch doctors');
+            const response = await fetchWithAuth(`${API_BASE_URL}/get_all_doctors.php`);
+            if (!response.ok) {
+                // Try to get a more descriptive error from the response body
+                const errorText = await response.text();
+                throw new Error(`Failed to fetch doctors: ${response.status} ${response.statusText} - ${errorText}`);
+            }
             state.doctors = await response.json();
             return state.doctors;
-        } catch (error) { console.error('Error fetching doctors:', error); return []; }
+        } catch (error) { 
+            console.error('Error fetching doctors:', error); 
+            // Propagate the error to the caller so it can be handled in the UI
+            throw error; 
+        }
     }
 
     async function getPatients() {
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/patients`);
+            const response = await fetchWithAuth(`${API_BASE_URL}/get_all_patients.php`);
             if (!response.ok) throw new Error('Failed to fetch patients');
             state.patients = await response.json();
             return state.patients;
@@ -500,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function addDoctor(doctor) {
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/doctors`, { method: 'POST', body: JSON.stringify(doctor) });
+            const response = await fetchWithAuth(`${API_BASE_URL}/doctors_crud.php`, { method: 'POST', body: JSON.stringify(doctor) });
             if (!response.ok) { alert(`新增失敗: ${await response.text()}`); return null; }
             return await response.json();
         } catch (error) { alert(`發生錯誤：${error.message}`); return null; }
@@ -508,14 +515,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deleteDoctor(doctorId) {
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/${doctorId}`, { method: 'DELETE' });
+            const response = await fetchWithAuth(`${API_BASE_URL}/doctors_crud.php?id=${doctorId}`, { method: 'DELETE' });
             return response.ok;
         } catch (error) { console.error(`發生錯誤：${error.message}`); return false; }
     }
 
     async function getMedicalRecords() {
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/medicalrecords`);
+            const response = await fetchWithAuth(`${API_BASE_URL}/medical_records.php`);
             if (!response.ok) throw new Error('Failed to fetch medical records');
             state.medicalRecords = await response.json();
             return state.medicalRecords;
@@ -532,7 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function updateUserRole(userId, role) {
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/users/${userId}/role`, { method: 'PUT', body: JSON.stringify({ role }) });
+            const response = await fetchWithAuth(`${API_BASE_URL}/update_user_role.php?id=${userId}`, { method: 'PUT', body: JSON.stringify({ role }) });
             return response.ok;
         } catch (error) { console.error('Error updating user role:', error); return false; }
     }
@@ -543,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
 
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/appointments/my-appointments`);
+            const response = await fetchWithAuth(`${API_BASE_URL}/my_appointments.php`);
             if (!response.ok) throw new Error('無法獲取預約');
             const appointments = await response.json();
 
@@ -585,7 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const appointmentId = e.target.dataset.appointmentId;
                     if (confirm('您確定要取消這個預約嗎？')) {
                         try {
-                            const deleteResponse = await fetchWithAuth(`${API_BASE_URL}/appointments/${appointmentId}`, { method: 'DELETE' });
+                            const deleteResponse = await fetchWithAuth(`${API_BASE_URL}/appointments.php?id=${appointmentId}`, { method: 'DELETE' });
                             if (deleteResponse.ok) {
                                 alert('預約已取消。');
                                 renderMyAppointmentsPage(); // Refresh
@@ -690,7 +697,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function renderAvailableDoctors(date) {
         availableDoctorsList.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/availability/doctors?date=${date}`);
+            const response = await fetchWithAuth(`${API_BASE_URL}/get_available_doctors.php?date=${date}`);
             if (!response.ok) throw new Error('Failed to fetch available doctors');
             const doctors = await response.json();
 
@@ -778,7 +785,7 @@ document.addEventListener('DOMContentLoaded', () => {
             async function proceedWithBooking(doctorId, patientId, date, time) {
                  try {
                     const appointmentDateTime = `${date}T${time}:00`;
-                    const bookResponse = await fetchWithAuth(`${API_BASE_URL}/appointments`, {
+                    const bookResponse = await fetchWithAuth(`${API_BASE_URL}/appointments.php`, {
                         method: 'POST',
                         body: JSON.stringify({
                             doctorId: parseInt(doctorId),
@@ -1090,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cancellationHoursInput = document.getElementById('cancellation-hours-input');
 
         // Fetch and display current settings
-        fetchWithAuth(`${API_BASE_URL}/doctors/me/settings`)
+        fetchWithAuth(`${API_BASE_URL}/doctor_settings.php`)
             .then(response => response.json())
             .then(settings => {
                 cancellationHoursInput.value = settings.cancellationPolicyHours;
@@ -1151,7 +1158,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         try {
-            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/me/settings`, {
+            const response = await fetchWithAuth(`${API_BASE_URL}/doctor_settings.php`, {
                 method: 'PUT',
                 body: JSON.stringify({ cancellationPolicyHours: parseInt(hours) })
             });
@@ -1170,9 +1177,8 @@ document.addEventListener('DOMContentLoaded', () => {
         detailsContent.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
         try {
             // Fetch both availability and appointments in parallel
-            const [availResponse, apptResponse] = await Promise.all([
-                fetchWithAuth(`${API_BASE_URL}/doctors/${doctorId}/availability?date=${date}`),
-                fetchWithAuth(`${API_BASE_URL}/appointments/doctor?date=${date}`)
+            const [availResponse, apptResponse] = await Promise.all([fetchWithAuth(`${API_BASE_URL}/availability.php?doctorId=${doctorId}&date=${date}`),
+                fetchWithAuth(`${API_BASE_URL}/get_doctor_appointments.php?date=${date}`)
             ]);
 
             if (!availResponse.ok) throw new Error(`Error fetching availability: ${availResponse.statusText}`);
@@ -1242,7 +1248,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 startTime: `${selectedDate}T${startTime}:00`,
                 endTime: `${selectedDate}T${endTime}:00`
             };
-            const response = await fetchWithAuth(`${API_BASE_URL}/doctors/${doctorId}/availability`, {
+            const response = await fetchWithAuth(`${API_BASE_URL}/availability.php?doctorId=${doctorId}`, {
                 method: 'POST',
                 body: JSON.stringify(availabilityData)
             });
@@ -1265,7 +1271,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!doctorId) { alert('錯誤：找不到醫師ID。'); return; }
             if (confirm('您確定要刪除這個時段嗎？')) {
                 try {
-                    const response = await fetchWithAuth(`${API_BASE_URL}/availability/${availabilityId}`, { method: 'DELETE' });
+                    const response = await fetchWithAuth(`${API_BASE_URL}/availability.php?id=${availabilityId}`, { method: 'DELETE' });
                     if (response.ok) {
                         const selectedDate = document.getElementById('my-schedule-selected-date-display').textContent;
                         renderMySchedulePage(); // Re-render whole calendar page

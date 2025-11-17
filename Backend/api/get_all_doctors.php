@@ -2,19 +2,14 @@
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 
+include_once 'config/database.php';
+
 // --- Database Connection Logic ---
-$host = "localhost";
-$db_name = "ukn111534131";
-$username = "ukn111534131";
-$password = "ukn111534131";
+$database = new Database();
 $conn = null;
 
 try {
-    $conn = new mysqli($host, $username, $password, $db_name);
-    if ($conn->connect_error) {
-        throw new Exception("Connection failed: " . $conn->connect_error);
-    }
-    $conn->set_charset("utf8");
+    $conn = $database->getConnection();
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(array("message" => "Database connection error.", "error" => $e->getMessage()));
